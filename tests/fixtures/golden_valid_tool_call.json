@@ -1,0 +1,17 @@
+{
+  "output": {
+    "name": "search_db",
+    "arguments": "{\"query\": \"machine learning\"}"
+  },
+  "checks": [
+    {
+      "type": "valid_json"
+    },
+    {
+      "type": "tool_call",
+      "name": "search_db",
+      "required_args": ["query"]
+    }
+  ]
+}
+

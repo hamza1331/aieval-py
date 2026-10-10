@@ -1,0 +1,14 @@
+{
+  "output": {
+    "name": "unexpected_tool",
+    "arguments": "{}"
+  },
+  "checks": [
+    {
+      "type": "tool_call",
+      "name": "search_db",
+      "required_args": ["query"]
+    }
+  ]
+}
+
