@@ -1,8 +1,8 @@
 # aieval
 
 [![CI](https://github.com/hamza1331/aieval-py/actions/workflows/test.yml/badge.svg)](https://github.com/hamza1331/aieval-py/actions/workflows/test.yml)
-[![PyPI version](https://img.shields.io/pypi/v/aieval-py.svg)](https://pypi.org/project/aieval-py/)
-[![Python versions](https://img.shields.io/pypi/pyversions/aieval-py.svg)](https://pypi.org/project/aieval-py/)
+[![PyPI version](https://img.shields.io/pypi/v/aieval-py)](https://pypi.org/project/aieval-py/)
+[![Python versions](https://img.shields.io/pypi/pyversions/aieval-py)](https://pypi.org/project/aieval-py/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Deterministic-first runtime validation and reliability toolkit for LLM outputs and agent actions.**
