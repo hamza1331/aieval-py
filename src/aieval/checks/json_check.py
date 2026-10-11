@@ -57,4 +57,3 @@ class ValidJsonCheck:
 def valid_json() -> ValidJsonCheck:
     """Returns a check ensuring the output is valid JSON."""
     return ValidJsonCheck()
-

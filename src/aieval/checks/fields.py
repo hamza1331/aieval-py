@@ -125,4 +125,3 @@ def allowed_fields(
 ) -> AllowedFieldsCheck:
     """Returns a check verifying that only allowed fields are present."""
     return AllowedFieldsCheck(fields, severity=severity)
-

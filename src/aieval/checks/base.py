@@ -53,4 +53,3 @@ class AsyncCheck(Protocol):
         output: Any,
         context: EvaluationContext | None = None,
     ) -> CheckResult | Sequence[Failure] | None: ...
-

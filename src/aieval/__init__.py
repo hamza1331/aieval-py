@@ -84,4 +84,3 @@ __all__ = [
     "tool_call_one_of",
     "valid_json",
 ]
-

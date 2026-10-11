@@ -63,4 +63,3 @@ class EvaluationResult:
             "warnings": [w.to_dict() for w in self.warnings],
             "summary": self.summary.to_dict(),
         }
-

@@ -14,4 +14,3 @@ __all__ = [
     "partition_failures_by_severity",
     "resolve_severity_threshold",
 ]
-

@@ -36,4 +36,3 @@ def test_allowed_fields_check():
     assert len(res_unexp.failures) == 1
     assert res_unexp.failures[0].code == FailureCode.UNEXPECTED_FIELD
     assert res_unexp.failures[0].path == "admin"
-

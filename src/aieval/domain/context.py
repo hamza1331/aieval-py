@@ -11,4 +11,3 @@ class EvaluationContext:
     model: str | None = None
     trace_id: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
-

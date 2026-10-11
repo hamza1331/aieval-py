@@ -59,4 +59,3 @@ def test_length_bounds():
     res_long = check("123456")
     assert res_long.passed is False
     assert res_long.failures[0].code == FailureCode.LENGTH_OUT_OF_BOUNDS
-

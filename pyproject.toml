@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "aieval"
+name = "aieval-py"
 version = "0.1.0"
 description = "Deterministic-first runtime validation and reliability toolkit for LLM outputs and agent actions."
 readme = "README.md"

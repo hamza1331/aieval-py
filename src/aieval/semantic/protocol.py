@@ -33,4 +33,3 @@ class AsyncSemanticJudge(Protocol):
     ) -> Sequence[Failure] | Failure | None:
         """Asynchronously evaluates output and returns failure(s) if criteria are not met."""
         ...
-

@@ -239,4 +239,3 @@ def tool_call_one_of(
 
 # Attach one_of as a namespace method
 tool_call_check.one_of = tool_call_one_of  # type: ignore[attr-defined]
-

@@ -84,4 +84,3 @@ def schema_check(
 ) -> SchemaCheck:
     """Returns a check validating output against a Pydantic v2 BaseModel or TypeAdapter."""
     return SchemaCheck(schema, severity=severity, name=name)
-
