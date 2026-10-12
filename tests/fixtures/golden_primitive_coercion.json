@@ -1,0 +1,23 @@
+{
+  "name": "strict_primitive_coercion",
+  "description": "Ensures string numbers are not coerced into numeric types",
+  "output": "3",
+  "checks": [
+    {
+      "type": "numeric_range",
+      "min_val": 1,
+      "max_val": 10
+    }
+  ],
+  "expected": {
+    "passed": false,
+    "failures": [
+      {
+        "code": "VALUE_CONSTRAINT_VIOLATION",
+        "path": null,
+        "severity": "error"
+      }
+    ]
+  }
+}
+

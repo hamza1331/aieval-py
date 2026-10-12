@@ -1,0 +1,24 @@
+{
+  "name": "null_vs_missing_field",
+  "description": "Distinguishes between missing key and null key",
+  "output": {
+    "present_null": null
+  },
+  "checks": [
+    {
+      "type": "required_fields",
+      "fields": ["present_null", "completely_missing"]
+    }
+  ],
+  "expected": {
+    "passed": false,
+    "failures": [
+      {
+        "code": "MISSING_REQUIRED_FIELD",
+        "path": "completely_missing",
+        "severity": "error"
+      }
+    ]
+  }
+}
+
