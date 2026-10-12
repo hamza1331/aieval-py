@@ -27,4 +27,3 @@ def test_cli_golden_null_vs_missing(capsys):
     assert len(res["failures"]) == 1
     assert res["failures"][0]["code"] == "MISSING_REQUIRED_FIELD"
     assert res["failures"][0]["path"] == "completely_missing"
-
