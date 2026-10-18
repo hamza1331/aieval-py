@@ -39,10 +39,12 @@ pip install aieval-py
 from aieval import evaluate, schema_check, required_fields
 from pydantic import BaseModel, Field
 
+
 class AnalysisReport(BaseModel):
     summary: str
     confidence_score: float = Field(ge=0.0, le=1.0)
     tags: list[str]
+
 
 llm_output = '{"summary": "All systems nominal", "confidence_score": 0.95, "tags": ["ops", "prod"]}'
 
@@ -69,25 +71,27 @@ Validate tool calls before execution to avoid runtime exceptions and agent failu
 from aieval import evaluate, tool_call_check
 from pydantic import BaseModel
 
+
 class SendEmailArgs(BaseModel):
     recipient: str
     subject: str
     body: str
 
+
 # Works with both native dicts and OpenAI stringified JSON arguments:
 raw_tool_call = {
     "name": "send_email",
-    "arguments": '{"recipient": "team@example.com", "subject": "Update"}'
+    "arguments": '{"recipient": "team@example.com", "subject": "Update"}',
 }
 
 result = evaluate(
     output=raw_tool_call,
     checks=[
         tool_call_check("send_email", schema=SendEmailArgs, required_args=["body"]),
-    ]
+    ],
 )
 
-print(result.passed) # False - missing required argument 'body'
+print(result.passed)  # False - missing required argument 'body'
 ```
 
 ### 3. Asynchronous Pipeline (`aevaluate`)
@@ -95,6 +99,7 @@ print(result.passed) # False - missing required argument 'body'
 ```python
 import asyncio
 from aieval import aevaluate, valid_json, regex_match
+
 
 async def main():
     result = await aevaluate(
@@ -104,6 +109,7 @@ async def main():
         ],
     )
     print("Passed:", result.passed)
+
 
 asyncio.run(main())
 ```

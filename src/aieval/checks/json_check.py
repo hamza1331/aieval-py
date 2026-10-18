@@ -9,7 +9,14 @@ from aieval.domain.failure import Failure, FailureCode, Severity
 class ValidJsonCheck:
     """Checks that output is valid JSON (if string) or a valid JSON-serializable structure."""
 
-    name: str = "valid_json"
+    def __init__(
+        self,
+        *,
+        severity: Severity = Severity.ERROR,
+        name: str = "valid_json",
+    ) -> None:
+        self.severity = severity
+        self.name = name
 
     def __call__(
         self,
@@ -26,7 +33,7 @@ class ValidJsonCheck:
                     Failure(
                         code=FailureCode.INVALID_JSON,
                         message="Output is an empty string, expected valid JSON.",
-                        severity=Severity.ERROR,
+                        severity=self.severity,
                     ),
                     name=self.name,
                 )
@@ -38,7 +45,7 @@ class ValidJsonCheck:
                     Failure(
                         code=FailureCode.INVALID_JSON,
                         message=f"Output is not valid JSON: {err.msg} at line {err.lineno} col {err.colno}",
-                        severity=Severity.ERROR,
+                        severity=self.severity,
                         metadata={"error": str(err), "pos": err.pos},
                     ),
                     name=self.name,
@@ -48,12 +55,12 @@ class ValidJsonCheck:
             Failure(
                 code=FailureCode.INVALID_JSON,
                 message=f"Output of type {type(output).__name__} is not a valid JSON string or object.",
-                severity=Severity.ERROR,
+                severity=self.severity,
             ),
             name=self.name,
         )
 
 
-def valid_json() -> ValidJsonCheck:
+def valid_json(*, severity: Severity = Severity.ERROR, name: str = "valid_json") -> ValidJsonCheck:
     """Returns a check ensuring the output is valid JSON."""
-    return ValidJsonCheck()
+    return ValidJsonCheck(severity=severity, name=name)

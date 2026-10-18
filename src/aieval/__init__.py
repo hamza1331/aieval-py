@@ -43,6 +43,7 @@ from aieval.semantic import (
     AsyncSemanticJudge,
     SemanticJudge,
 )
+from aieval.specs import build_check_from_spec
 
 __version__ = "0.1.1"
 
@@ -74,6 +75,7 @@ __all__ = [
     "aevaluate",
     "allowed_fields",
     "allowed_values",
+    "build_check_from_spec",
     "evaluate",
     "length_bounds",
     "numeric_range",

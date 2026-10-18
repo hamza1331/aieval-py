@@ -4,55 +4,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from aieval.checks import (
-    allowed_fields,
-    allowed_values,
-    length_bounds,
-    numeric_range,
-    regex_match,
-    required_fields,
-    tool_call_check,
-    valid_json,
-)
-from aieval.domain import EvaluationContext, Severity
+from aieval.domain import EvaluationContext
 from aieval.runner import evaluate
+from aieval.specs.factory import build_check_from_spec
 
-
-def _build_check_from_spec(spec: dict[str, Any]) -> Any:
-    check_type = spec.get("type")
-    severity = Severity(spec.get("severity", "error"))
-
-    if check_type == "valid_json":
-        return valid_json()
-    elif check_type == "required_fields":
-        return required_fields(spec["fields"], severity=severity)
-    elif check_type == "allowed_fields":
-        return allowed_fields(spec["fields"], severity=severity)
-    elif check_type == "regex_match":
-        return regex_match(spec["pattern"], severity=severity)
-    elif check_type == "allowed_values":
-        return allowed_values(spec["allowed"], severity=severity)
-    elif check_type == "numeric_range":
-        return numeric_range(
-            min_val=spec.get("min_val"),
-            max_val=spec.get("max_val"),
-            severity=severity,
-        )
-    elif check_type == "length_bounds":
-        return length_bounds(
-            min_len=spec.get("min_len"),
-            max_len=spec.get("max_len"),
-            severity=severity,
-        )
-    elif check_type == "tool_call":
-        return tool_call_check(
-            name=spec["name"],
-            required_args=spec.get("required_args"),
-            allow_unexpected_args=spec.get("allow_unexpected_args", False),
-            severity=severity,
-        )
-    else:
-        raise ValueError(f"Unknown check type in spec: '{check_type}'")
+_build_check_from_spec = build_check_from_spec
 
 
 def _format_terminal_output(result: Any, json_mode: bool) -> None:
