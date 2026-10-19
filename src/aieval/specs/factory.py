@@ -6,6 +6,7 @@ from aieval.checks import (
     Check,
     allowed_fields,
     allowed_values,
+    disallowed_fields,
     length_bounds,
     numeric_range,
     regex_match,
@@ -81,6 +82,18 @@ def build_check_from_spec(spec: dict[str, Any]) -> Check:
         else:
             raise TypeError(f"'fields' must be a list of strings, got {type(raw_fields).__name__}")
         return allowed_fields(fields_list, severity=severity)
+
+    elif check_type in ("disallowed_fields", "forbidden_fields", "forbidden"):
+        raw_fields = spec.get("fields")
+        if raw_fields is None:
+            raise ValueError("Check type 'disallowed_fields' requires 'fields' list")
+        if isinstance(raw_fields, str):
+            fields_list = [raw_fields]
+        elif isinstance(raw_fields, (list, tuple)):
+            fields_list = list(raw_fields)
+        else:
+            raise TypeError(f"'fields' must be a list of strings, got {type(raw_fields).__name__}")
+        return disallowed_fields(fields_list, severity=severity)
 
     elif check_type in ("enum", "allowed_values"):
         allowed = spec.get("allowed") if "allowed" in spec else spec.get("values")

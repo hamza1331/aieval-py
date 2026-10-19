@@ -157,6 +157,14 @@ def test_spec_factory_aliases_and_types():
     assert evaluate({"name": "search", "arguments": {"q": "python"}}, [c7]).passed is True
     assert evaluate({"name": "wrong_tool", "arguments": {"q": "python"}}, [c7]).passed is False
 
+    # disallowed_fields / forbidden_fields alias
+    c8 = build_check_from_spec({"type": "forbidden_fields", "fields": ["secret"]})
+    res_forbidden = evaluate({"secret": "123", "public": "abc"}, [c8])
+    assert res_forbidden.passed is False
+    assert res_forbidden.is_retryable is False
+    assert res_forbidden.has_terminal_failures is True
+    assert res_forbidden.failures[0].code == "DISALLOWED_FIELD"
+
 
 def test_nested_field_path_and_jsonpath():
     """Verify dot notation and leading $. field path resolution."""

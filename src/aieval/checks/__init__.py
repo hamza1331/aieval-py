@@ -11,8 +11,10 @@ from aieval.checks.constraints import (
 )
 from aieval.checks.fields import (
     AllowedFieldsCheck,
+    DisallowedFieldsCheck,
     RequiredFieldsCheck,
     allowed_fields,
+    disallowed_fields,
     required_fields,
 )
 from aieval.checks.json_check import ValidJsonCheck, valid_json
@@ -30,6 +32,7 @@ __all__ = [
     "AsyncCheck",
     "Check",
     "CheckResult",
+    "DisallowedFieldsCheck",
     "LengthBoundsCheck",
     "MultiToolCallCheck",
     "NumericRangeCheck",
@@ -40,6 +43,7 @@ __all__ = [
     "ValidJsonCheck",
     "allowed_fields",
     "allowed_values",
+    "disallowed_fields",
     "length_bounds",
     "numeric_range",
     "regex_match",
