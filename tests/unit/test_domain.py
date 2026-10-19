@@ -1,5 +1,6 @@
 import pytest
 
+from aieval.checks import tool_call_check
 from aieval.domain import (
     EvaluationError,
     EvaluationResult,
@@ -9,6 +10,7 @@ from aieval.domain import (
     Retryability,
     Severity,
 )
+from aieval.runner import evaluate
 
 
 def test_severity_ordering():
@@ -145,3 +147,18 @@ def test_evaluation_result_serialization_and_exception():
 
     assert "Evaluation failed with 1 failure" in str(exc_info.value)
     assert exc_info.value.failures == (f,)
+
+
+@pytest.mark.parametrize("fail_on", ["info", "warning", "error", "critical"])
+def test_terminal_tool_failure_always_blocks_and_is_not_retryable(fail_on):
+    result = evaluate(
+        {"name": "unlisted", "arguments": {}},
+        [tool_call_check("search")],
+        fail_on=fail_on,
+    )
+
+    assert result.passed is False
+    assert result.is_retryable is False
+    assert result.has_terminal_failures is True
+    assert len(result.terminal_failures) == 1
+    assert result.warnings == ()

@@ -3,7 +3,7 @@
 **Document Version:** 1.0  
 **Target Package:** `aieval-py` (v0.2.0 milestone)  
 **Author:** Hamza Ali <hamxa1331@gmail.com>  
-**Status:** Ready for Implementation Review  
+**Status:** Implemented in source for the planned 0.2.0 release; release validation remains pending.
 
 ---
 
@@ -147,4 +147,3 @@ As identified in engineering review:
 - [x] `EvaluationResult.terminal_failures` and `EvaluationResult.retryable_failures` isolate fatal triggers from repairable items.
 - [x] 100% of `aieval-py` tests pass (`pytest tests/`), with 0 ruff errors and 0 mypy errors.
 - [x] Downstream consumers (like `aieval-console`) receive `retryability` transparently via `to_dict()`.
-

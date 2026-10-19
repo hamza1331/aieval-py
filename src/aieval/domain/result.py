@@ -51,9 +51,7 @@ class EvaluationResult:
 
         If ANY failure is terminal (e.g. policy breach, unknown tool), returns False.
         """
-        return self.passed or all(
-            f.retryability == Retryability.RETRYABLE for f in self.failures
-        )
+        return self.passed or all(f.retryability == Retryability.RETRYABLE for f in self.failures)
 
     @property
     def has_terminal_failures(self) -> bool:

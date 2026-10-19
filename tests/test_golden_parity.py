@@ -7,7 +7,7 @@ from aieval.cli.main import main
 def test_cli_golden_primitive_coercion(capsys):
     fixture_path = Path(__file__).parent / "fixtures" / "golden_primitive_coercion.json"
     exit_code = main(["run", str(fixture_path), "--json"])
-    assert exit_code == 1
+    assert exit_code == 0
 
     captured = capsys.readouterr()
     res = json.loads(captured.out)
@@ -19,7 +19,7 @@ def test_cli_golden_primitive_coercion(capsys):
 def test_cli_golden_null_vs_missing(capsys):
     fixture_path = Path(__file__).parent / "fixtures" / "golden_null_vs_missing.json"
     exit_code = main(["run", str(fixture_path), "--json"])
-    assert exit_code == 1
+    assert exit_code == 0
 
     captured = capsys.readouterr()
     res = json.loads(captured.out)

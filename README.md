@@ -29,6 +29,17 @@ Catch predictable failures (schema violations, missing required keys, JSON forma
 pip install aieval-py
 ```
 
+### Behavior changes in 0.2.0
+
+This release tightens validation behavior. Tool-call arguments not declared by
+`required_args` or the supplied schema are rejected by default; set
+`allow_unexpected_args=True` only when extra arguments are intentionally allowed.
+Custom checks must return `None`, `Failure`, `CheckResult`, or a sequence of
+supported failure results; unsupported values now raise `EvaluationConfigError`.
+Terminal failures also remain blocking regardless of the `fail_on` severity
+threshold. Review these changes before upgrading if your application relies on
+permissive argument handling or custom return values.
+
 ---
 
 ## Quickstart
@@ -123,6 +134,10 @@ asyncio.run(main())
 ```bash
 aieval run path/to/fixture.json
 ```
+
+When a fixture includes an `expected` block, the command compares the evaluation
+result with that expectation and exits successfully only when they match. This
+allows both expected passes and expected failures to be regression fixtures.
 
 Or output raw JSON:
 

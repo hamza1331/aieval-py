@@ -48,7 +48,7 @@ from aieval.semantic import (
 )
 from aieval.specs import build_check_from_spec
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 
 __all__ = [
     "AllowedFieldsCheck",

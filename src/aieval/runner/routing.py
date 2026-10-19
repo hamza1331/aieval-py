@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from aieval.domain.failure import Failure, Severity
+from aieval.domain.failure import Failure, Retryability, Severity
 from aieval.domain.result import EvaluationResult, EvaluationSummary
 
 
@@ -37,7 +37,7 @@ def partition_failures_by_severity(
 
     for f in failures:
         # If severity is >= threshold, it blocks pass
-        if f.severity >= threshold:
+        if f.retryability == Retryability.TERMINAL or f.severity >= threshold:
             blocking.append(f)
         else:
             warnings.append(f)
