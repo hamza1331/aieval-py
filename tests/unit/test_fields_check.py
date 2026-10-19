@@ -1,5 +1,5 @@
-from aieval.checks import allowed_fields, required_fields
-from aieval.domain import FailureCode
+from aieval.checks import allowed_fields, disallowed_fields, required_fields
+from aieval.domain import FailureCode, Retryability
 
 
 def test_required_fields_check():
@@ -36,3 +36,20 @@ def test_allowed_fields_check():
     assert len(res_unexp.failures) == 1
     assert res_unexp.failures[0].code == FailureCode.UNEXPECTED_FIELD
     assert res_unexp.failures[0].path == "admin"
+
+
+def test_disallowed_fields_check():
+    check = disallowed_fields(["password", "secret_key", "__admin__"])
+
+    # Valid output (no disallowed fields)
+    assert check({"id": 101, "username": "alice"}).passed is True
+
+    # Output contains a disallowed field
+    res = check({"id": 101, "password": "cleartext_password", "role": "user"})
+    assert res.passed is False
+    assert len(res.failures) == 1
+    fail = res.failures[0]
+    assert fail.code == FailureCode.DISALLOWED_FIELD
+    assert fail.retryability == Retryability.TERMINAL
+    assert fail.path == "password"
+    assert "Disallowed field present: 'password'" in fail.message

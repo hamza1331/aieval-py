@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-from aieval.domain.failure import Failure
+from aieval.domain.failure import Failure, Retryability
 
 
 class EvaluationError(Exception):
@@ -45,6 +45,29 @@ class EvaluationResult:
         )
     )
 
+    @property
+    def is_retryable(self) -> bool:
+        """Returns True if the run passed or if ALL failures are retryable.
+
+        If ANY failure is terminal (e.g. policy breach, unknown tool), returns False.
+        """
+        return self.passed or all(f.retryability == Retryability.RETRYABLE for f in self.failures)
+
+    @property
+    def has_terminal_failures(self) -> bool:
+        """Returns True if one or more failures require immediate fail-closed termination."""
+        return any(f.retryability == Retryability.TERMINAL for f in self.failures)
+
+    @property
+    def retryable_failures(self) -> tuple[Failure, ...]:
+        """Returns only the failures that can safely enter bounded self-correction loops."""
+        return tuple(f for f in self.failures if f.retryability == Retryability.RETRYABLE)
+
+    @property
+    def terminal_failures(self) -> tuple[Failure, ...]:
+        """Returns the terminal failures requiring immediate fail-closed handling."""
+        return tuple(f for f in self.failures if f.retryability == Retryability.TERMINAL)
+
     def raise_for_failures(self) -> None:
         """Raises EvaluationError if passed is False."""
         if not self.passed:
@@ -59,6 +82,8 @@ class EvaluationResult:
         """Serializes result to a dictionary."""
         return {
             "passed": self.passed,
+            "is_retryable": self.is_retryable,
+            "has_terminal_failures": self.has_terminal_failures,
             "failures": [f.to_dict() for f in self.failures],
             "warnings": [w.to_dict() for w in self.warnings],
             "summary": self.summary.to_dict(),

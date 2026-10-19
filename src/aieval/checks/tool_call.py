@@ -142,6 +142,27 @@ class ToolCallCheck:
                     )
                 )
 
+        if not self.allow_unexpected_args:
+            allowed_args = set(self.required_args)
+            if self.schema is not None:
+                if isinstance(self.schema, type) and issubclass(self.schema, BaseModel):
+                    schema = self.schema.model_json_schema()
+                else:
+                    schema = self.schema.json_schema()
+                properties = schema.get("properties", {})
+                if isinstance(properties, dict):
+                    allowed_args.update(properties)
+
+            for arg in args_dict.keys() - allowed_args:
+                failures.append(
+                    Failure(
+                        code=FailureCode.TOOL_CALL_UNEXPECTED_ARG,
+                        message=f"Tool '{self.tool_name}' received unexpected argument: '{arg}'",
+                        severity=self.severity,
+                        path=arg,
+                    )
+                )
+
         # Check schema if provided
         if self.schema is not None:
             try:

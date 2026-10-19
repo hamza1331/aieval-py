@@ -88,12 +88,37 @@ class FailureCode(str, Enum):
     TOOL_CALL_ARG_TYPE_MISMATCH = "TOOL_CALL_ARG_TYPE_MISMATCH"
     TOOL_CALL_UNEXPECTED_ARG = "TOOL_CALL_UNEXPECTED_ARG"
 
+    # Policy / Security
+    POLICY_VIOLATION = "POLICY_VIOLATION"
+    DISALLOWED_FIELD = "DISALLOWED_FIELD"
+
     # Semantic (Advisory)
     SEMANTIC_JUDGE_SCORE_LOW = "SEMANTIC_JUDGE_SCORE_LOW"
     SEMANTIC_JUDGE_FAILED = "SEMANTIC_JUDGE_FAILED"
 
     # Generic / Custom
     CUSTOM_CHECK_FAILED = "CUSTOM_CHECK_FAILED"
+
+    @property
+    def default_retryability(self) -> "Retryability":
+        """Returns default retryability for this failure code."""
+        terminal_codes = {
+            FailureCode.TOOL_CALL_UNKNOWN_TOOL,
+            FailureCode.POLICY_VIOLATION,
+            FailureCode.DISALLOWED_FIELD,
+        }
+        return Retryability.TERMINAL if self in terminal_codes else Retryability.RETRYABLE
+
+
+class Retryability(str, Enum):
+    """Indicates whether an orchestration layer can safely attempt self-correction.
+
+    - RETRYABLE: Minor structural/formatting slip safe for bounded self-correction.
+    - TERMINAL: Critical security, policy, or unauthorized tool breach that must fail closed immediately.
+    """
+
+    RETRYABLE = "retryable"
+    TERMINAL = "terminal"
 
 
 @dataclass(frozen=True)
@@ -103,9 +128,31 @@ class Failure:
     code: str | FailureCode
     message: str
     severity: Severity = Severity.ERROR
+    retryability: Retryability | None = None
     path: str | tuple[str | int, ...] | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
     suggested_repair: str | None = None
+
+    def __post_init__(self) -> None:
+        # Resolve retryability from FailureCode if not explicitly passed
+        resolved_retry = self.retryability
+        if resolved_retry is None:
+            if isinstance(self.code, FailureCode):
+                resolved_retry = self.code.default_retryability
+            elif isinstance(self.code, str):
+                try:
+                    resolved_retry = FailureCode(self.code).default_retryability
+                except ValueError:
+                    resolved_retry = Retryability.RETRYABLE
+            else:
+                resolved_retry = Retryability.RETRYABLE
+        object.__setattr__(self, "retryability", resolved_retry)
+
+        # Non-downgrade safety invariant:
+        # Terminal policy/tool failures must never carry a suggested_repair
+        # to prevent naive self-healing loops from prompting models to bypass guards.
+        if resolved_retry == Retryability.TERMINAL and self.suggested_repair is not None:
+            object.__setattr__(self, "suggested_repair", None)
 
     def to_dict(self) -> dict[str, Any]:
         """Serializes failure to a JSON-compatible dictionary."""
@@ -117,11 +164,14 @@ class Failure:
 
         code_str = self.code.value if hasattr(self.code, "value") else str(self.code)
         sev_str = self.severity.value if hasattr(self.severity, "value") else str(self.severity)
+        retry_val = self.retryability or Retryability.RETRYABLE
+        retry_str = retry_val.value if hasattr(retry_val, "value") else str(retry_val)
 
         data: dict[str, Any] = {
             "code": code_str,
             "message": self.message,
             "severity": sev_str,
+            "retryability": retry_str,
             "path": path_str,
             "metadata": dict(self.metadata),
         }

@@ -60,6 +60,37 @@ def test_tool_call_check_failures():
     assert res_type.passed is False
     assert any(f.code == FailureCode.TOOL_CALL_ARG_TYPE_MISMATCH for f in res_type.failures)
 
+    unexpected_arg = {
+        "name": "search_database",
+        "arguments": {"query": "python", "limit": 5, "admin": True},
+    }
+    res_unexpected = check(unexpected_arg)
+    assert res_unexpected.passed is False
+    assert any(f.code == FailureCode.TOOL_CALL_UNEXPECTED_ARG for f in res_unexpected.failures)
+
+
+def test_tool_call_check_unexpected_args_follow_configuration():
+    call = {"name": "search", "arguments": {"query": "docs", "extra": True}}
+
+    strict_check = tool_call_check("search", required_args=["query"])
+    assert any(f.code == FailureCode.TOOL_CALL_UNEXPECTED_ARG for f in strict_check(call).failures)
+
+    permissive_check = tool_call_check(
+        "search",
+        required_args=["query"],
+        allow_unexpected_args=True,
+    )
+    assert permissive_check(call).passed is True
+
+
+def test_tool_call_check_schema_allows_declared_optional_fields():
+    check = tool_call_check("search_database", schema=SearchArgs)
+
+    assert check({"name": "search_database", "arguments": {"query": "python"}}).passed is True
+    result = check({"name": "search_database", "arguments": {"query": "python", "admin": True}})
+    assert result.passed is False
+    assert any(f.code == FailureCode.TOOL_CALL_UNEXPECTED_ARG for f in result.failures)
+
 
 def test_tool_call_check_one_of():
     check1 = tool_call_check("search", required_args=["query"])

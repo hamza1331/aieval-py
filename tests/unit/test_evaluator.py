@@ -35,6 +35,17 @@ def test_sync_evaluate_with_failures():
     assert res.failures[0].code == FailureCode.MISSING_REQUIRED_FIELD
 
 
+@pytest.mark.parametrize("invalid_result", [False, True, 1, "passed", object()])
+def test_sync_evaluate_rejects_invalid_check_results(invalid_result):
+    with pytest.raises(EvaluationConfigError, match="returned unsupported result"):
+        evaluate({}, [lambda output: invalid_result])
+
+
+def test_sync_evaluate_rejects_invalid_result_items():
+    with pytest.raises(EvaluationConfigError, match="unsupported result item"):
+        evaluate({}, [lambda output: [Failure(code="BAD", message="failure"), False]])
+
+
 def test_sync_evaluate_severity_routing_warning_vs_error():
     # Warning severity failure
     check_warn = required_fields(["optional_field"], severity=Severity.WARNING)
@@ -80,6 +91,15 @@ async def test_async_evaluate_concurrent_checks():
     assert res_fail.passed is False
     assert len(res_fail.failures) == 1
     assert res_fail.failures[0].code == "POLICY_VIOLATION"
+
+
+@pytest.mark.asyncio
+async def test_async_evaluate_rejects_invalid_check_results():
+    async def invalid_check(output):
+        return False
+
+    with pytest.raises(EvaluationConfigError, match="returned unsupported result"):
+        await aevaluate({}, [invalid_check])
 
 
 class CustomSemanticJudge:

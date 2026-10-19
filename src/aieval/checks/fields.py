@@ -125,3 +125,50 @@ def allowed_fields(
 ) -> AllowedFieldsCheck:
     """Returns a check verifying that only allowed fields are present."""
     return AllowedFieldsCheck(fields, severity=severity)
+
+
+class DisallowedFieldsCheck:
+    """Checks that specific forbidden or sensitive fields are NOT present in output."""
+
+    def __init__(
+        self,
+        fields: Sequence[str],
+        *,
+        severity: Severity = Severity.ERROR,
+    ) -> None:
+        self.disallowed = set(fields)
+        self.severity = severity
+        self.name = f"disallowed_fields({list(fields)})"
+
+    def __call__(
+        self,
+        output: Any,
+        context: EvaluationContext | None = None,
+    ) -> CheckResult:
+        data, err = _normalize_dict(output)
+        if err is not None:
+            return CheckResult.failed(err, name=self.name)
+        assert data is not None
+
+        present_forbidden = [f for f in data if f in self.disallowed]
+        if present_forbidden:
+            failures = [
+                Failure(
+                    code=FailureCode.DISALLOWED_FIELD,
+                    message=f"Disallowed field present: '{field}'",
+                    severity=self.severity,
+                    path=field,
+                )
+                for field in present_forbidden
+            ]
+            return CheckResult.failed(failures, name=self.name)
+        return CheckResult.ok(name=self.name)
+
+
+def disallowed_fields(
+    fields: Sequence[str],
+    *,
+    severity: Severity = Severity.ERROR,
+) -> DisallowedFieldsCheck:
+    """Returns a check verifying that specified forbidden fields are absent."""
+    return DisallowedFieldsCheck(fields, severity=severity)

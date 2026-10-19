@@ -6,6 +6,7 @@ from aieval.checks import (
     AsyncCheck,
     Check,
     CheckResult,
+    DisallowedFieldsCheck,
     LengthBoundsCheck,
     MultiToolCallCheck,
     NumericRangeCheck,
@@ -16,6 +17,7 @@ from aieval.checks import (
     ValidJsonCheck,
     allowed_fields,
     allowed_values,
+    disallowed_fields,
     length_bounds,
     numeric_range,
     regex_match,
@@ -32,6 +34,7 @@ from aieval.domain import (
     EvaluationSummary,
     Failure,
     FailureCode,
+    Retryability,
     Severity,
 )
 from aieval.runner import (
@@ -43,8 +46,9 @@ from aieval.semantic import (
     AsyncSemanticJudge,
     SemanticJudge,
 )
+from aieval.specs import build_check_from_spec
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 
 __all__ = [
     "AllowedFieldsCheck",
@@ -53,6 +57,7 @@ __all__ = [
     "AsyncSemanticJudge",
     "Check",
     "CheckResult",
+    "DisallowedFieldsCheck",
     "EvaluationConfigError",
     "EvaluationContext",
     "EvaluationError",
@@ -65,6 +70,7 @@ __all__ = [
     "NumericRangeCheck",
     "RegexMatchCheck",
     "RequiredFieldsCheck",
+    "Retryability",
     "SchemaCheck",
     "SemanticJudge",
     "Severity",
@@ -74,6 +80,8 @@ __all__ = [
     "aevaluate",
     "allowed_fields",
     "allowed_values",
+    "build_check_from_spec",
+    "disallowed_fields",
     "evaluate",
     "length_bounds",
     "numeric_range",

@@ -16,7 +16,7 @@ from aieval.runner.routing import (
 from aieval.semantic.protocol import SemanticJudge
 
 
-def _extract_failures(res: Any) -> list[Failure]:
+def _extract_failures(res: Any, check_name: str) -> list[Failure]:
     """Helper to normalize check / judge return value into a list of Failures."""
     if res is None:
         return []
@@ -31,8 +31,16 @@ def _extract_failures(res: Any) -> list[Failure]:
                 failures.append(item)
             elif isinstance(item, CheckResult):
                 failures.extend(item.failures)
+            else:
+                raise EvaluationConfigError(
+                    f"Check '{check_name}' returned unsupported result item "
+                    f"'{type(item).__name__}'. Expected Failure or CheckResult."
+                )
         return failures
-    return []
+    raise EvaluationConfigError(
+        f"Check '{check_name}' returned unsupported result '{type(res).__name__}'. "
+        "Expected None, Failure, CheckResult, or a sequence of Failure/CheckResult values."
+    )
 
 
 def evaluate(
@@ -94,7 +102,8 @@ def evaluate(
         else:
             raise EvaluationConfigError(f"Check '{check}' is neither callable nor a SemanticJudge.")
 
-        failures = _extract_failures(res)
+        name = getattr(check, "name", type(check).__name__)
+        failures = _extract_failures(res, str(name))
         if failures:
             failed_checks_count += 1
             all_failures.extend(failures)
@@ -161,7 +170,8 @@ async def aevaluate(
         else:
             raise EvaluationConfigError(f"Check '{check}' is neither callable nor a SemanticJudge.")
 
-        return _extract_failures(res)
+        name = getattr(check, "name", type(check).__name__)
+        return _extract_failures(res, str(name))
 
     results = await asyncio.gather(*[_run_single(c) for c in checks])
 

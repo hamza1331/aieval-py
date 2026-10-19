@@ -4,55 +4,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from aieval.checks import (
-    allowed_fields,
-    allowed_values,
-    length_bounds,
-    numeric_range,
-    regex_match,
-    required_fields,
-    tool_call_check,
-    valid_json,
-)
-from aieval.domain import EvaluationContext, Severity
+from aieval.domain import EvaluationContext
 from aieval.runner import evaluate
+from aieval.specs.factory import build_check_from_spec
 
-
-def _build_check_from_spec(spec: dict[str, Any]) -> Any:
-    check_type = spec.get("type")
-    severity = Severity(spec.get("severity", "error"))
-
-    if check_type == "valid_json":
-        return valid_json()
-    elif check_type == "required_fields":
-        return required_fields(spec["fields"], severity=severity)
-    elif check_type == "allowed_fields":
-        return allowed_fields(spec["fields"], severity=severity)
-    elif check_type == "regex_match":
-        return regex_match(spec["pattern"], severity=severity)
-    elif check_type == "allowed_values":
-        return allowed_values(spec["allowed"], severity=severity)
-    elif check_type == "numeric_range":
-        return numeric_range(
-            min_val=spec.get("min_val"),
-            max_val=spec.get("max_val"),
-            severity=severity,
-        )
-    elif check_type == "length_bounds":
-        return length_bounds(
-            min_len=spec.get("min_len"),
-            max_len=spec.get("max_len"),
-            severity=severity,
-        )
-    elif check_type == "tool_call":
-        return tool_call_check(
-            name=spec["name"],
-            required_args=spec.get("required_args"),
-            allow_unexpected_args=spec.get("allow_unexpected_args", False),
-            severity=severity,
-        )
-    else:
-        raise ValueError(f"Unknown check type in spec: '{check_type}'")
+_build_check_from_spec = build_check_from_spec
 
 
 def _format_terminal_output(result: Any, json_mode: bool) -> None:
@@ -91,6 +47,68 @@ def _format_terminal_output(result: Any, json_mode: bool) -> None:
     print()
 
 
+def _validate_fixture_expectation(expected: Any) -> dict[str, Any]:
+    if not isinstance(expected, dict) or not isinstance(expected.get("passed"), bool):
+        raise ValueError("Fixture 'expected' must be an object with a boolean 'passed' field.")
+
+    failures = expected.get("failures", [])
+    if not isinstance(failures, list):
+        raise ValueError("Fixture 'expected.failures' must be an array.")
+    for index, failure in enumerate(failures):
+        if not isinstance(failure, dict) or not isinstance(failure.get("code"), str):
+            raise ValueError(f"Fixture 'expected.failures[{index}].code' must be a string.")
+        if (
+            "path" in failure
+            and failure["path"] is not None
+            and not isinstance(failure["path"], str)
+        ):
+            raise ValueError(f"Fixture 'expected.failures[{index}].path' must be a string or null.")
+        if "severity" in failure:
+            severity = failure["severity"]
+            if not isinstance(severity, str) or severity not in {
+                "info",
+                "warning",
+                "error",
+                "critical",
+            }:
+                raise ValueError(
+                    f"Fixture 'expected.failures[{index}].severity' must be a supported severity."
+                )
+    return expected
+
+
+def _matches_fixture_expectation(result: Any, expected: dict[str, Any]) -> bool:
+    if result.passed is not expected["passed"]:
+        return False
+    if "failures" not in expected:
+        return True
+
+    actual_failures = [failure.to_dict() for failure in result.failures]
+    expected_failures = expected["failures"]
+    matched_expected: dict[int, int] = {}
+
+    def match_expected(expected_index: int, seen_actual: set[int]) -> bool:
+        expected_failure = expected_failures[expected_index]
+        for actual_index, actual_failure in enumerate(actual_failures):
+            if actual_index in seen_actual or not all(
+                key not in expected_failure or expected_failure[key] == actual_failure[key]
+                for key in ("code", "path", "severity")
+            ):
+                continue
+            seen_actual.add(actual_index)
+            if actual_index not in matched_expected or match_expected(
+                matched_expected[actual_index], seen_actual
+            ):
+                matched_expected[actual_index] = expected_index
+                return True
+        return False
+
+    for index in range(len(expected_failures)):
+        if not match_expected(index, set()):
+            return False
+    return len(matched_expected) == len(actual_failures)
+
+
 def run_fixture(fixture_path: Path, json_mode: bool = False, fail_on: str = "error") -> int:
     if not fixture_path.exists():
         print(f"Error: Fixture file not found: {fixture_path}", file=sys.stderr)
@@ -122,9 +140,28 @@ def run_fixture(fixture_path: Path, json_mode: bool = False, fail_on: str = "err
         print(f"Error configuring checks: {err}", file=sys.stderr)
         return 1
 
+    expected: dict[str, Any] | None = None
+    if "expected" in data:
+        try:
+            expected = _validate_fixture_expectation(data["expected"])
+        except ValueError as err:
+            print(f"Error validating fixture expectation: {err}", file=sys.stderr)
+            return 1
+
     result = evaluate(output, checks, context=context, fail_on=fail_on)
     _format_terminal_output(result, json_mode)
-    return 0 if result.passed else 1
+    if expected is None:
+        return 0 if result.passed else 1
+
+    matches_expected = _matches_fixture_expectation(result, expected)
+    if not json_mode:
+        if matches_expected:
+            print("\033[92mFixture expectation matched.\033[0m")
+        else:
+            print("\033[91mFixture expectation did not match.\033[0m", file=sys.stderr)
+    elif not matches_expected:
+        print("Fixture expectation did not match.", file=sys.stderr)
+    return 0 if matches_expected else 1
 
 
 def run_check_file(

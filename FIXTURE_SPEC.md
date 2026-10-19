@@ -59,6 +59,13 @@ A single JSON fixture file can be executed identically by both the TypeScript CL
 }
 ```
 
+For the Python CLI and Aieval Console replay, `expected.passed` is always
+compared. If `expected.failures` is omitted, failure details are not asserted.
+When it is present, entries match the actual blocking failures without depending
+on list order; duplicate entries are significant. `code` is always compared,
+while optional `path` and `severity` are compared only when supplied. An
+explicit `"path": null` asserts that the failure has no path.
+
 ---
 
 ## 3. Coercion & Edge Case Contract Rules
@@ -159,8 +166,14 @@ File: `tests/fixtures/golden_unexpected_argument.json`
     }
   ],
   "expected": {
-    "passed": true
+    "passed": false,
+    "failures": [
+      {
+        "code": "TOOL_CALL_UNEXPECTED_ARG",
+        "path": "unauthorized_override",
+        "severity": "error"
+      }
+    ]
   }
 }
 ```
-

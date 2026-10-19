@@ -29,6 +29,17 @@ Catch predictable failures (schema violations, missing required keys, JSON forma
 pip install aieval-py
 ```
 
+### Behavior changes in 0.2.0
+
+This release tightens validation behavior. Tool-call arguments not declared by
+`required_args` or the supplied schema are rejected by default; set
+`allow_unexpected_args=True` only when extra arguments are intentionally allowed.
+Custom checks must return `None`, `Failure`, `CheckResult`, or a sequence of
+supported failure results; unsupported values now raise `EvaluationConfigError`.
+Terminal failures also remain blocking regardless of the `fail_on` severity
+threshold. Review these changes before upgrading if your application relies on
+permissive argument handling or custom return values.
+
 ---
 
 ## Quickstart
@@ -39,10 +50,12 @@ pip install aieval-py
 from aieval import evaluate, schema_check, required_fields
 from pydantic import BaseModel, Field
 
+
 class AnalysisReport(BaseModel):
     summary: str
     confidence_score: float = Field(ge=0.0, le=1.0)
     tags: list[str]
+
 
 llm_output = '{"summary": "All systems nominal", "confidence_score": 0.95, "tags": ["ops", "prod"]}'
 
@@ -69,25 +82,27 @@ Validate tool calls before execution to avoid runtime exceptions and agent failu
 from aieval import evaluate, tool_call_check
 from pydantic import BaseModel
 
+
 class SendEmailArgs(BaseModel):
     recipient: str
     subject: str
     body: str
 
+
 # Works with both native dicts and OpenAI stringified JSON arguments:
 raw_tool_call = {
     "name": "send_email",
-    "arguments": '{"recipient": "team@example.com", "subject": "Update"}'
+    "arguments": '{"recipient": "team@example.com", "subject": "Update"}',
 }
 
 result = evaluate(
     output=raw_tool_call,
     checks=[
         tool_call_check("send_email", schema=SendEmailArgs, required_args=["body"]),
-    ]
+    ],
 )
 
-print(result.passed) # False - missing required argument 'body'
+print(result.passed)  # False - missing required argument 'body'
 ```
 
 ### 3. Asynchronous Pipeline (`aevaluate`)
@@ -95,6 +110,7 @@ print(result.passed) # False - missing required argument 'body'
 ```python
 import asyncio
 from aieval import aevaluate, valid_json, regex_match
+
 
 async def main():
     result = await aevaluate(
@@ -104,6 +120,7 @@ async def main():
         ],
     )
     print("Passed:", result.passed)
+
 
 asyncio.run(main())
 ```
@@ -117,6 +134,10 @@ asyncio.run(main())
 ```bash
 aieval run path/to/fixture.json
 ```
+
+When a fixture includes an `expected` block, the command compares the evaluation
+result with that expectation and exits successfully only when they match. This
+allows both expected passes and expected failures to be regression fixtures.
 
 Or output raw JSON:
 
